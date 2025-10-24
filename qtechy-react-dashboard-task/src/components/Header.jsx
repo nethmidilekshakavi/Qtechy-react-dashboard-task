@@ -2,11 +2,19 @@ import React from "react";
 
 const Header = ({ title, imageUrl }) => {
     return (
-        <header className="bg-blue-100 flex flex-col items-center p-6 rounded-lg shadow-md">
-            <h1 className="text-3xl font-bold mb-4">{title || "Default Title"}</h1>
+        <header className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
             {imageUrl && (
-                <img src={imageUrl} alt="Header" className="w-40 h-40 object-cover rounded-full" />
+                <img
+                    src={imageUrl}
+                    alt="Header"
+                    className="absolute inset-0 w-full h-full object-cover opacity-40"
+                />
             )}
+            <div className="relative h-full flex items-center justify-center">
+                <h1 className="text-4xl md:text-5xl font-bold text-white text-center px-4 drop-shadow-lg">
+                    {title || "Your Company Name"}
+                </h1>
+            </div>
         </header>
     );
 };

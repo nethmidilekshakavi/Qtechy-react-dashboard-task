@@ -1,93 +1,215 @@
 import React, { useState } from "react";
-import axios from "axios";
+import {Edit3,Save,Upload,Mail,Phone,MapPin} from "lucide-react";
 
-const Dashboard = ({ onUpdate }) => {
-    const [formData, setFormData] = useState({
-        title: "",
-        imageUrl: "",
-        links: [
-            { label: "", url: "" },
-            { label: "", url: "" },
-            { label: "", url: "" },
-        ],
-        email: "",
-        phone: "",
-        address: "",
-    });
+const Dashboard = ({ formData, setFormData, onSave }) => {
+    const [imagePreview, setImagePreview] = useState(formData.imageUrl || "");
+    const [uploading, setUploading] = useState(false);
 
-    // Handle text input changes
-    const handleChange = (e, index, field) => {
+    const handleChange = (e, index = null) => {
         const { name, value } = e.target;
+
         if (name.startsWith("linkLabel") || name.startsWith("linkUrl")) {
             const newLinks = [...formData.links];
-            if (name.startsWith("linkLabel")) newLinks[index].label = value;
-            else newLinks[index].url = value;
+            if (name.startsWith("linkLabel")) {
+                newLinks[index].label = value;
+            } else {
+                newLinks[index].url = value;
+            }
             setFormData({ ...formData, links: newLinks });
         } else {
             setFormData({ ...formData, [name]: value });
         }
-        onUpdate(formData);
     };
 
-    // Upload image to Cloudinary
     const uploadImage = async (e) => {
         const file = e.target.files[0];
-        const data = new FormData();
-        data.append("file", file);
-        data.append("upload_preset", "YOUR_UNSIGNED_PRESET");
+        if (!file) return;
 
-        const res = await axios.post(
-            `https://api.cloudinary.com/v1_1/davhloffd/image/upload`,
-            data
-        );
-        setFormData({ ...formData, imageUrl: res.data.secure_url });
-        onUpdate({ ...formData, imageUrl: res.data.secure_url });
+        // Preview image before upload
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+
+        setUploading(true);
+
+        try {
+            const data = new FormData();
+            data.append("file", file);
+            data.append("upload_preset", "ml_default"); // Replace with your preset
+
+            const res = await fetch(
+                `https://api.cloudinary.com/v1_1/davhloffd/image/upload`,
+                {
+                    method: "POST",
+                    body: data,
+                }
+            );
+
+            const result = await res.json();
+            const newImageUrl = result.secure_url;
+
+            setFormData({ ...formData, imageUrl: newImageUrl });
+            setImagePreview(newImageUrl);
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Image upload failed. Please try again.");
+        } finally {
+            setUploading(false);
+        }
     };
 
     return (
-        <div className="bg-white p-6 shadow-lg rounded-lg max-w-xl mx-auto mt-8">
-            <h2 className="text-2xl font-semibold mb-4 text-center">Dashboard</h2>
-
-            {/* Header */}
-            <div>
-                <label className="block font-semibold mb-1">Header Title:</label>
-                <input type="text" name="title" className="border p-2 w-full rounded" onChange={handleChange} />
+        <div className="bg-white rounded-xl shadow-2xl p-6 md:p-8 max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                    <Edit3 className="text-blue-600" />
+                    Dashboard
+                </h2>
+                <button
+                    onClick={onSave}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+                >
+                    <Save size={18} />
+                    Save Changes
+                </button>
             </div>
 
-            <div className="mt-4">
-                <label className="block font-semibold mb-1">Upload Header Image:</label>
-                <input type="file" onChange={uploadImage} />
+            {/* Header Section */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                <h3 className="text-xl font-bold mb-4 text-gray-800">Header Settings</h3>
+
+                <div className="mb-4">
+                    <label className="block font-semibold mb-2 text-gray-700">Title:</label>
+                    <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        placeholder="Enter your company name or title"
+                        className="border-2 border-gray-300 p-3 w-full rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                        onChange={handleChange}
+                    />
+                </div>
+
+                <div>
+                    <label className="block font-semibold mb-2 text-gray-700">Header Image:</label>
+                    <div className="flex flex-col gap-4">
+                        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 p-4 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                            <Upload className="text-blue-600" />
+                            <span className="text-gray-600">
+                {uploading ? "Uploading..." : "Click to upload image"}
+              </span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={uploadImage}
+                                className="hidden"
+                                disabled={uploading}
+                            />
+                        </label>
+
+                        {imagePreview && (
+                            <div className="relative">
+                                <img
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    className="w-full h-48 object-cover rounded-lg shadow-md"
+                                />
+                                <span className="absolute top-2 right-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm">
+                  Preview
+                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            {/* Navbar */}
-            <div className="mt-6">
-                <h3 className="font-bold mb-2">Navbar Links</h3>
+            {/* Navbar Section */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg">
+                <h3 className="text-xl font-bold mb-4 text-gray-800">Navigation Links</h3>
                 {formData.links.map((link, i) => (
-                    <div key={i} className="flex gap-2 mb-2">
-                        <input
-                            type="text"
-                            placeholder={`Label ${i + 1}`}
-                            name={`linkLabel${i}`}
-                            className="border p-2 flex-1 rounded"
-                            onChange={(e) => handleChange(e, i, "label")}
-                        />
-                        <input
-                            type="text"
-                            placeholder="URL"
-                            name={`linkUrl${i}`}
-                            className="border p-2 flex-1 rounded"
-                            onChange={(e) => handleChange(e, i, "url")}
-                        />
+                    <div key={i} className="flex flex-col md:flex-row gap-3 mb-4">
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-600">
+                                Link {i + 1} Label
+                            </label>
+                            <input
+                                type="text"
+                                placeholder={`e.g., Home, About, Contact`}
+                                name={`linkLabel${i}`}
+                                value={link.label}
+                                className="border-2 border-gray-300 p-3 w-full rounded-lg focus:border-green-500 focus:outline-none transition-colors"
+                                onChange={(e) => handleChange(e, i)}
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-600">
+                                Link {i + 1} URL
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="https://example.com"
+                                name={`linkUrl${i}`}
+                                value={link.url}
+                                className="border-2 border-gray-300 p-3 w-full rounded-lg focus:border-green-500 focus:outline-none transition-colors"
+                                onChange={(e) => handleChange(e, i)}
+                            />
+                        </div>
                     </div>
                 ))}
             </div>
 
-            {/* Footer */}
-            <div className="mt-6">
-                <h3 className="font-bold mb-2">Footer</h3>
-                <input type="text" name="email" placeholder="Email" className="border p-2 w-full mb-2 rounded" onChange={handleChange} />
-                <input type="text" name="phone" placeholder="Phone" className="border p-2 w-full mb-2 rounded" onChange={handleChange} />
-                <input type="text" name="address" placeholder="Address" className="border p-2 w-full rounded" onChange={handleChange} />
+            {/* Footer Section */}
+            <div className="p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
+                <h3 className="text-xl font-bold mb-4 text-gray-800">Footer Information</h3>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                            <Mail size={18} className="text-orange-600" />
+                            Email:
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            placeholder="contact@example.com"
+                            className="border-2 border-gray-300 p-3 w-full rounded-lg focus:border-orange-500 focus:outline-none transition-colors"
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                            <Phone size={18} className="text-orange-600" />
+                            Phone:
+                        </label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            placeholder="+1 (555) 123-4567"
+                            className="border-2 border-gray-300 p-3 w-full rounded-lg focus:border-orange-500 focus:outline-none transition-colors"
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                            <MapPin size={18} className="text-orange-600" />
+                            Address:
+                        </label>
+                        <input
+                            type="text"
+                            name="address"
+                            value={formData.address}
+                            placeholder="123 Main St, City, State 12345"
+                            className="border-2 border-gray-300 p-3 w-full rounded-lg focus:border-orange-500 focus:outline-none transition-colors"
+                            onChange={handleChange}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     );
