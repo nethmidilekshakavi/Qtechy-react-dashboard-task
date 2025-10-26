@@ -4,6 +4,7 @@ import Footer from "./components/Footer.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import { useState, useEffect } from "react";
 import { Eye } from "lucide-react";
+import './index.css'
 
 const App = () => {
     const [formData, setFormData] = useState({
@@ -96,3 +97,4 @@ const App = () => {
 };
 
 export default App;
+

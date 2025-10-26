@@ -1,11 +1,23 @@
 import React, { useState } from "react";
 import {Edit3,Save,Upload,Mail,Phone,MapPin} from "lucide-react";
+import axios from "axios";
 
 const Dashboard = ({ formData, setFormData, onSave }) => {
     const [imagePreview, setImagePreview] = useState(formData.imageUrl || "");
     const [uploading, setUploading] = useState(false);
 
-    const handleChange = (e, index = null) => {
+
+const saveData = async (data) => {
+        await axios.post("http://localhost:5000/api/components", data);
+    }
+
+const fetchData = async () => {
+        const res = await axios.get("http://localhost:5000/api/components");
+        console.log(res.data);
+    }
+
+
+const handleChange = (e, index = null) => {
         const { name, value } = e.target;
 
         if (name.startsWith("linkLabel") || name.startsWith("linkUrl")) {
@@ -21,7 +33,8 @@ const Dashboard = ({ formData, setFormData, onSave }) => {
         }
     };
 
-    const uploadImage = async (e) => {
+
+const uploadImage = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
